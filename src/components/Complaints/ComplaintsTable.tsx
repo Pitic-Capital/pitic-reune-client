@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Alert, Stack } from "@mui/material";
 import axios from "axios";
 import { TableComponent } from "../Common/TableComponent";
-import { API_URL_TEST } from "../../const/api_urls";
+import { API_URL } from "../../const/api_urls";
 
 const ComplaintsTable = () => {
    const [error, setError] = useState("");
@@ -17,7 +17,7 @@ const ComplaintsTable = () => {
          try {
             // Paso 1: Obtener total de páginas
             const { data: totalData } = await axios.get(
-               `${API_URL_TEST}/reune/reclamaciones/obtener/reclamaciongeneral/total`,
+               `${API_URL}/reune/reclamaciones/obtener/reclamaciongeneral/total`,
                {
                   headers: { Authorization: token },
                }
@@ -31,7 +31,7 @@ const ComplaintsTable = () => {
 
             // Paso 2: Obtener datos de cada página
             const requests = Array.from({ length: totalPages }, (_, i) =>
-               axios.get(`${API_URL_TEST}/reune/reclamaciones/obtener/reclamaciongeneral/${i + 1}`, {
+               axios.get(`${API_URL}/reune/reclamaciones/obtener/reclamaciongeneral/${i + 1}`, {
                   headers: { Authorization: token },
                })
             );

@@ -6,7 +6,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { DatePicker } from "@mui/x-date-pickers";
 import { es } from "date-fns/locale";
-import { API_URL_TEST } from "../const/api_urls";
+import { API_URL } from "../const/api_urls";
 import { useCatalogues } from "../context/CataloguesContext";
 
 const Form = () => {
@@ -255,7 +255,7 @@ const Form = () => {
 
          console.log({ formattedData });
 
-         await axios.post(`${API_URL_TEST}/reune/quejas`, formattedData, { headers });
+         await axios.post(`${API_URL}/reune/quejas`, formattedData, { headers });
       } catch (err) {
          setError("Error al enviar queja: " + (err?.response?.data?.error || err.message));
       }
