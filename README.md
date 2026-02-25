@@ -1,70 +1,106 @@
-# Getting Started with Create React App
+# pitic-reune-client
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Frontend para la integración con la **API REUNE de CONDUSEF**. Permite a instituciones financieras registrar, consultar y eliminar **Consultas, Reclamaciones y Aclaraciones** de usuarios a través de una interfaz web integrada.
 
-## Available Scripts
+**URL produccion:** https://Pitic-Capital.github.io/pitic-reune-client
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## Requisitos
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- Node.js >= 16
+- npm >= 8
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## Ejecucion local
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```bash
+npm install
+npm start
+```
 
-### `npm run build`
+La app estará disponible en [http://localhost:3000](http://localhost:3000).
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Deploy a GitHub Pages
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+npm run deploy
+```
 
-### `npm run eject`
+Esto ejecuta el build de produccion y publica automaticamente en la rama `gh-pages`.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+---
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Modulos principales
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### `src/api/reune.client.ts`
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Cliente centralizado con todas las llamadas a las distintas APIs de CONDUSEF.
 
-## Learn More
+| Region                    | Funciones                                                                                               |
+| ------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Config de ambiente        | `getApiUrl`, `ENV_KEY`, URLs dinámicas de producción y pruebas                                          |
+| Autenticacion             | `createSuperUser`, `createUser`, `getToken`, `renewToken`                                               |
+| Consultas                 | `sendConsultas`, `deleteConsulta`, `getConsultas`, `getConsultasTotal`                                  |
+| Reclamaciones             | `sendReclamaciones`, `deleteReclamacion`, `getReclamaciones`, `getReclamacionesTotal`                   |
+| Aclaraciones              | `sendAclaraciones`, `deleteAclaracion`, `getAclaraciones`, `getAclaracionesTotal`                       |
+| Catalogos institucionales | `getCatalogoMediosRecepcion`, `getCatalogoNivelesAtencion`, `getCatalogoProductos`, `getCatalogoCausas` |
+| SEPOMEX                   | `getEstados`, `getCodigosPostales`, `getMunicipios`, `getColonias`                                      |
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+> **Nota:** Los catálogos institucionales y códigos postales en REUNE consumen por debajo la URL de la API REDECO.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### `src/types/reune.types.ts`
 
-### Code Splitting
+Tipos y contratos TypeScript (`Consulta`, `Reclamacion`, `Aclaracion`, `BaseResponseEnvio`, etc.).
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### `src/pages/`
 
-### Analyzing the Bundle Size
+| Archivo         | Descripcion                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------ |
+| `Login.tsx`     | Autenticacion con usuario y contrasena. Incluye toggle de ambiente (produccion / pruebas). |
+| `Dashboard.tsx` | Vista principal con pestañas para Consultas, Aclaraciones, Reclamaciones y Catálogos.      |
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### `src/components/`
 
-### Making a Progressive Web App
+| Archivo                            | Descripcion                                                                                        |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `Form.tsx`                         | Formulario principal centralizado para el registro de los módulos.                                 |
+| `Consults/ConsultsTable.tsx`       | Paginación, consulta y eliminación específica de **Consultas**.                                    |
+| `Aclarations/AclarationsTable.tsx` | Paginación, consulta y eliminación específica de **Aclaraciones**.                                 |
+| `Complaints/ComplaintsTable.tsx`   | Paginación, consulta y eliminación específica de **Reclamaciones**.                                |
+| `Catalogues.tsx`                   | Visualiza en formato _custom tab panels_ los catálogos descargados de la institución.              |
+| `Common/TableComponent.tsx`        | Tabla genérica paginada con soporte de scroll horizontal y control de skeleton de carga integrado. |
+| `Common/ConfirmDeleteDialog.tsx`   | Diálogo de confirmacion de eliminación reutilizable con el tema UI corporativo de la empresa.      |
+| `Common/TabPanel.tsx`              | Contenedor semántico responsivo para el contenido de las pestañas en el Dashboard.                 |
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### `src/context/CataloguesContext.tsx`
 
-### Advanced Configuration
+Context global que carga y expone los catalogos institucionales y SEPOMEX al inicio de la sesión. Disponible vía `useCatalogues()`.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+- Implementa `loading` base para renderizar _skeletons_ visuales en su lugar.
+- Implementa _retry logic_ (3 intentos con retrasos exponenciales) de respaldo.
 
-### Deployment
+### `src/context/SnackbarContext.tsx`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Context global de notificaciones UI (`useSnackbar()`). Facilita invocar una alerta emergente (success, error, warning) que desaparece automáticamente o a demanda del usuario en cualquier punto de la aplicación.
 
-### `npm run build` fails to minify
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Ambientes
+
+El ambiente se controla desde el **Switch/Toggle** en la pantalla de Login y se persiste en `localStorage` bajo la llave `APP_ENV`.
+
+| Valor            | URL Base de Peticiones REUNE        |
+| ---------------- | ----------------------------------- |
+| `prod` (default) | `https://api-reune.condusef.gob.mx` |
+| `test`           | `https://api.condusef.gob.mx`       |
+
+---
+
+## Referencia API
+
+- **Documentación de diccionarios:** PDF y manuales técnicos del REUNE.
+- Soporte tecnico CONDUSEF: `soporte.api@condusef.gob.mx`
