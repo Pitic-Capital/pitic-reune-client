@@ -3,6 +3,7 @@ import { useState } from "react";
 import ConsultsTable from "../components/Consults/ConsultsTable";
 import AclarationsTable from "../components/Aclarations/AclarationsTable";
 import ComplaintsTable from "../components/Complaints/ComplaintsTable";
+import Catalogues from "../components/Catalogues";
 import TabPanel from "../components/Common/TabPanel";
 import LogoutIcon from "@mui/icons-material/Logout";
 
@@ -64,6 +65,7 @@ const Dashboard = ({ setToken }) => {
                <Tab label="Consultas" />
                <Tab label="Aclaraciones" />
                <Tab label="Reclamaciones" />
+               <Tab label="Catálogos" />
             </Tabs>
          </Box>
          <TabPanel value={value} index={0}>
@@ -74,6 +76,9 @@ const Dashboard = ({ setToken }) => {
          </TabPanel>
          <TabPanel value={value} index={2}>
             <ComplaintsTable />
+         </TabPanel>
+         <TabPanel value={value} index={3}>
+            <Catalogues />
          </TabPanel>
       </Stack>
    );

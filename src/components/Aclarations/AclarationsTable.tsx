@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { Alert, Stack } from "@mui/material";
-import axios from "axios";
 import { TableComponent } from "../Common/TableComponent";
-import { getApiUrl } from "../../api/reune.client";
+import { getAclaraciones, getAclaracionesTotal } from "../../api/reune.client";
 
 const AclarationsTable = () => {
    const [error, setError] = useState("");
@@ -16,10 +15,7 @@ const AclarationsTable = () => {
 
          try {
             // Paso 1: Obtener total de páginas
-            const { data: totalData } = await axios.get(
-               `${getApiUrl()}/reune/aclaraciones/obtener/aclaraciongeneral/total`,
-               { headers: { Authorization: token } },
-            );
+            const { data: totalData } = await getAclaracionesTotal(token);
 
             const totalPages = totalData?.folios?.[0]?.paginas || 0;
 
@@ -28,14 +24,10 @@ const AclarationsTable = () => {
             }
 
             // Paso 2: Obtener datos de cada página
-            const requests = Array.from({ length: totalPages }, (_, i) =>
-               axios.get(`${getApiUrl()}/reune/aclaraciones/obtener/aclaraciongeneral/${i + 1}`, {
-                  headers: { Authorization: token },
-               }),
-            );
+            const requests = Array.from({ length: totalPages }, (_, i) => getAclaraciones(token, i + 1));
 
             const responses = await Promise.all(requests);
-            const allResults = responses.flatMap((res) => res.data?.folios || []);
+            const allResults = responses.flatMap((res: any) => res.data?.folios || []);
 
             // Paso 3: Transformar y guardar
             const transformed = [

@@ -1,36 +1,65 @@
-import { Alert, Stack } from "@mui/material";
+import { Box, Paper, Skeleton, Tab, Tabs, Typography } from "@mui/material";
 import { useCatalogues } from "../context/CataloguesContext";
-import { useMemo } from "react";
+import { useState } from "react";
 import { TableComponent } from "./Common/TableComponent";
+import TabPanel from "./Common/TabPanel";
 
 const Catalogues = () => {
-   const { mediosRecepcion, nivelesAtencion, productos, estados } = useCatalogues();
+   const [tabIndex, setTabIndex] = useState(0);
 
-   const catalogos = useMemo(
-      () => [
-         { data: mediosRecepcion, label: "Medios de recepción" },
-         { data: nivelesAtencion, label: "Niveles de atención" },
-         { data: productos, label: "Productos" },
-         { data: estados, label: "Estados" },
-      ],
-      [mediosRecepcion, nivelesAtencion, productos, estados]
-   );
+   const { mediosRecepcion, nivelesAtencion, productos, estados, loading } = useCatalogues();
+
+   // Si esta cargando, mostramos skeleton tabs y skeleton tables
+   if (loading) {
+      return (
+         <Box sx={{ width: "100%", bgcolor: "background.paper", borderRadius: 2, overflow: "hidden" }}>
+            <Box sx={{ borderBottom: 1, borderColor: "divider", p: 1 }}>
+               <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 1 }} />
+            </Box>
+            <Box sx={{ p: 3 }}>
+               <Skeleton variant="rounded" height={400} />
+            </Box>
+         </Box>
+      );
+   }
+
+   const tabsConfig = [
+      { label: "Medios de recepción", data: mediosRecepcion },
+      { label: "Niveles de atención", data: nivelesAtencion },
+      { label: "Productos", data: productos },
+      { label: "Estados (SEPOMEX)", data: estados },
+   ];
 
    return (
-      <Stack spacing={2}>
-         <h2>Catálogos cargados</h2>
-         {catalogos.map(({ data, label }) => (
-            <Stack key={label} spacing={2}>
-               <Alert
-                  severity={Array.isArray(Object.values(data)) && Object.values(data).length > 0 ? "success" : "error"}
-               >
-                  {Object.values(data)?.length || 0}{" "}
-                  {Object.values(data)?.length > 0 ? `${label} cargados` : `No se pudo cargar ${label.toLowerCase()}`}
-               </Alert>
-               <TableComponent data={data} label={label} />
-            </Stack>
+      <Paper elevation={0} sx={{ width: "100%", borderRadius: 2, overflow: "hidden" }}>
+         <Box sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "#f8fdfc" }}>
+            <Tabs
+               value={tabIndex}
+               onChange={(_, newValue) => setTabIndex(newValue)}
+               variant="scrollable"
+               scrollButtons="auto"
+               textColor="inherit"
+               TabIndicatorProps={{ style: { backgroundColor: "#305e58ff" } }}
+               sx={{ "& .MuiTab-root": { fontWeight: "bold", color: "#305e58ff" } }}
+            >
+               {tabsConfig.map((tab, idx) => (
+                  <Tab key={idx} label={tab.label} />
+               ))}
+            </Tabs>
+         </Box>
+
+         {tabsConfig.map((tab, idx) => (
+            <TabPanel key={idx} value={tabIndex} index={idx}>
+               {tab.data.length > 0 ? (
+                  <TableComponent data={tab.data} label={tab.label} rowsPerPageDefault={10} />
+               ) : (
+                  <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
+                     No se encontró información para {tab.label.toLowerCase()}
+                  </Typography>
+               )}
+            </TabPanel>
          ))}
-      </Stack>
+      </Paper>
    );
 };
 

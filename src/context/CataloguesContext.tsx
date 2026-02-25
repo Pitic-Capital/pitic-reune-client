@@ -1,23 +1,17 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import axios from "axios";
-import { getApiUrl } from "../api/reune.client";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+   getCatalogoMediosRecepcion,
+   getCatalogoNivelesAtencion,
+   getCatalogoProductos,
+   getCatalogoCausas,
+   getEstados,
+   getCodigosPostales,
+   getMunicipios,
+   getColonias,
+} from "../api/reune.client";
+import type { SelectOption } from "../types/reune.types";
 
-const AUTH_HEADER = () => {
-   const token = localStorage.getItem("AUTH_TOKEN_REUNE");
-   return token ? { Authorization: token } : null;
-};
-
-const fetchFromApi = async (endpoint: string, params = "") => {
-   const headers = AUTH_HEADER();
-   if (!headers) return [];
-   try {
-      const { data } = await axios.get(`${getApiUrl()}${endpoint}${params}`, { headers });
-      return data;
-   } catch (error) {
-      console.error(`Error fetching ${endpoint}:`, error);
-      return [];
-   }
-};
+const getAuthToken = () => localStorage.getItem("AUTH_TOKEN_REUNE") ?? "";
 
 type CatalogueContextType = {
    mediosRecepcion: any[];
@@ -25,13 +19,14 @@ type CatalogueContextType = {
    productos: any[];
    estados: any[];
    causas: any[];
-   postalCodes: any[];
-   municipalities: any[];
-   neighborhoods: any[];
+   postalCodes: SelectOption[];
+   municipalities: SelectOption[];
+   neighborhoods: SelectOption[];
+   loading: boolean;
    fetchCausas: (productId: string) => Promise<void>;
-   fetchPostalCodes: (code: string) => Promise<void>;
+   fetchPostalCodes: (stateId: string) => Promise<void>;
    fetchMunicipalities: (stateId: string, cp: string) => Promise<void>;
-   fetchNeighborhoods: (municipalityId: string) => Promise<void>;
+   fetchNeighborhoods: (cp: string) => Promise<void>;
 };
 
 export const CataloguesContext = createContext<CatalogueContextType>({} as CatalogueContextType);
@@ -46,54 +41,95 @@ export const CataloguesProvider = ({ children }) => {
    const [postalCodes, setPostalCodes] = useState([]);
    const [municipalities, setMunicipalities] = useState([]);
    const [neighborhoods, setNeighborhoods] = useState([]);
+   const [loading, setLoading] = useState(true);
+
+   // Carga inicial de catalogos estaticos
+   const MAX_RETRIES = 3;
 
    useEffect(() => {
       const fetchInitial = async () => {
-         const medios = await fetchFromApi("/catalogos/medio-recepcion");
-         const niveles = await fetchFromApi("/catalogos/niveles-atencion");
-         const productos = await fetchFromApi("/catalogos/products-list");
-         const estados = await fetchFromApi("/sepomex/estados/");
+         setLoading(true);
+         for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+               const token = getAuthToken();
+               const [{ data: medios }, { data: niveles }, { data: prods }, { data: ests }] = await Promise.all([
+                  getCatalogoMediosRecepcion(token),
+                  getCatalogoNivelesAtencion(token),
+                  getCatalogoProductos(token),
+                  getEstados(),
+               ]);
 
-         setMediosRecepcion(medios?.medio);
-         setNivelesAtencion(niveles?.nivelesDeAtencion);
-         setProductos(productos?.products);
-         setEstados(estados?.estados);
+               console.log("Catalogos cargados:", medios, niveles, prods, ests);
+               setMediosRecepcion(medios?.medio ?? []);
+               setNivelesAtencion(niveles?.nivelesDeAtencion ?? []);
+               setProductos(prods?.products ?? []);
+               setEstados(ests?.estados ?? []);
+               break; // exito — salir del loop
+            } catch (error) {
+               console.warn(`Error al cargar catalogos (intento ${attempt}/${MAX_RETRIES}):`, error);
+               if (attempt < MAX_RETRIES) {
+                  await new Promise((res) => setTimeout(res, 1000 * 2 ** (attempt - 1))); // 1s, 2s, 4s
+               } else {
+                  console.error("No se pudieron cargar los catalogos tras varios intentos.");
+               }
+            }
+         }
+         setLoading(false);
       };
 
       fetchInitial();
    }, []);
 
-   const fetchCausas = async (productId: string) => {
-      const response = await fetchFromApi("/catalogos/causas-list/", `?product=${productId}`);
-      setCausas(response?.causas || []);
-   };
+   const fetchCausas = useCallback(async (productId: string) => {
+      try {
+         const { data } = await getCatalogoCausas(getAuthToken(), productId);
+         setCausas(data?.causas ?? []);
+      } catch (error) {
+         console.error("Error al cargar causas:", error);
+      }
+   }, []);
 
-   const fetchPostalCodes = async (state: string) => {
-      const response = await fetchFromApi("/sepomex/codigos-postales/", `?estado_id=${state}`);
-      const formattedPostal = response?.codigos_postales?.map(({ codigo_sepomex }) => ({
-         id: codigo_sepomex,
-         label: `CP: ${codigo_sepomex}`,
-      }));
-      setPostalCodes(formattedPostal);
-   };
+   const fetchPostalCodes = useCallback(async (stateId: string) => {
+      try {
+         const { data } = await getCodigosPostales(Number(stateId));
+         setPostalCodes(
+            data?.codigos_postales?.map(({ codigo_sepomex }) => ({
+               id: codigo_sepomex,
+               label: `CP: ${codigo_sepomex}`,
+            })) ?? [],
+         );
+      } catch (error) {
+         console.error("Error al cargar codigos postales:", error);
+      }
+   }, []);
 
-   const fetchMunicipalities = async (state: string, cp: string) => {
-      const response = await fetchFromApi("/sepomex/municipios/", `?estado_id=${state}&cp=${cp}`);
-      const formattedMunicipality = response?.municipios?.map(({ municipio, municipioId }) => ({
-         id: municipioId,
-         label: municipio,
-      }));
-      setMunicipalities(formattedMunicipality);
-   };
+   const fetchMunicipalities = useCallback(async (stateId: string, cp: string) => {
+      try {
+         const { data } = await getMunicipios(Number(stateId), cp);
+         setMunicipalities(
+            data?.municipios?.map(({ municipio, municipioId }) => ({
+               id: municipioId,
+               label: municipio,
+            })) ?? [],
+         );
+      } catch (error) {
+         console.error("Error al cargar municipios:", error);
+      }
+   }, []);
 
-   const fetchNeighborhoods = async (cp: string) => {
-      const response = await fetchFromApi("/sepomex/colonias/", `?cp=${cp}`);
-      const formatted = response?.colonias?.map(({ colonia, coloniaId }) => ({
-         id: coloniaId,
-         label: colonia,
-      }));
-      setNeighborhoods(formatted);
-   };
+   const fetchNeighborhoods = useCallback(async (cp: string) => {
+      try {
+         const { data } = await getColonias(cp);
+         setNeighborhoods(
+            data?.colonias?.map(({ colonia, coloniaId }) => ({
+               id: coloniaId,
+               label: colonia,
+            })) ?? [],
+         );
+      } catch (error) {
+         console.error("Error al cargar colonias:", error);
+      }
+   }, []);
 
    return (
       <CataloguesContext.Provider
@@ -106,6 +142,7 @@ export const CataloguesProvider = ({ children }) => {
             postalCodes,
             municipalities,
             neighborhoods,
+            loading,
             fetchCausas,
             fetchPostalCodes,
             fetchMunicipalities,

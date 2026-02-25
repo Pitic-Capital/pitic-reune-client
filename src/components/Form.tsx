@@ -8,6 +8,7 @@ import { DatePicker } from "@mui/x-date-pickers";
 import { es } from "date-fns/locale";
 import { getApiUrl } from "../api/reune.client";
 import { useCatalogues } from "../context/CataloguesContext";
+import { useSnackbar } from "../context/SnackbarContext";
 
 const Form = () => {
    const {
@@ -229,8 +230,8 @@ const Form = () => {
    const defaultValues = Object.fromEntries(Object.entries(fieldConfig).map(([key, config]) => [key, config.default]));
 
    const { control, handleSubmit } = useForm({ defaultValues });
-
-   const [error, setError] = useState("");
+   const { showSnackbar } = useSnackbar();
+   const [loading, setLoading] = useState(false);
 
    const formatToDDMMYY = (dateStr: string) => {
       const date = new Date(dateStr);
@@ -242,9 +243,13 @@ const Form = () => {
 
    const onSubmit = async (data: any) => {
       const token = localStorage.getItem("AUTH_TOKEN_REUNE");
-      if (!token) return;
+      if (!token) {
+         showSnackbar("Sesión expirada. Inicia sesión nuevamente.", "error");
+         return;
+      }
       const headers = { Authorization: token };
 
+      setLoading(true);
       try {
          const formattedData = {
             ...data,
@@ -256,8 +261,12 @@ const Form = () => {
          console.log({ formattedData });
 
          await axios.post(`${getApiUrl()}/reune/quejas`, formattedData, { headers });
-      } catch (err) {
-         setError("Error al enviar queja: " + (err?.response?.data?.error || err.message));
+         showSnackbar("Registro enviado al REUNE exitosamente.", "success");
+      } catch (err: any) {
+         const errorMsg = err?.response?.data?.error || err.message;
+         showSnackbar(`Error al enviar: ${errorMsg}`, "error");
+      } finally {
+         setLoading(false);
       }
    };
 
@@ -355,10 +364,9 @@ const Form = () => {
                      </Box>
                   ))}
                </Box>
-               <Button type="submit" variant="contained" sx={{ bgcolor: "#305e58ff" }}>
-                  Enviar
+               <Button type="submit" variant="contained" disabled={loading} sx={{ bgcolor: "#305e58ff" }}>
+                  {loading ? "Enviando..." : "Enviar"}
                </Button>
-               {error && <Alert severity="error">{error}</Alert>}
             </Stack>
          </form>
       </LocalizationProvider>
