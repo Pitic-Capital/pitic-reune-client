@@ -1,35 +1,60 @@
-import { Alert, Box, Button, TextField, Typography } from "@mui/material";
-import axios from "axios";
+import {
+   Box,
+   Button,
+   CircularProgress,
+   FormControlLabel,
+   IconButton,
+   InputAdornment,
+   Switch,
+   TextField,
+   Tooltip,
+   Typography,
+} from "@mui/material";
 import { useState } from "react";
-import { API_URL } from "../const/api_urls";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { ENV_KEY, renewToken } from "../api/reune.client";
+import { useSnackbar } from "../context/SnackbarContext";
 
 const Login = ({ setToken }) => {
    const [username, setUsername] = useState("");
    const [password, setPassword] = useState("");
-   const [error, setError] = useState("");
-   const [success, setSuccess] = useState("");
+   const [showPassword, setShowPassword] = useState(false);
+   const [loading, setLoading] = useState(false);
+   const [isTest, setIsTest] = useState(() => localStorage.getItem(ENV_KEY) === "test");
+   const { showSnackbar } = useSnackbar();
+
+   const handleEnvToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.checked ? "test" : "prod";
+      localStorage.setItem(ENV_KEY, value);
+      setIsTest(e.target.checked);
+   };
 
    const iniciarSesion = async () => {
-      setError("");
-      setSuccess("");
-
-      const url = API_URL?.replace(/\/+$/, "") + "/auth/users/token/";
-      const credentials = { username, password };
+      if (!username.trim() || !password.trim()) {
+         showSnackbar("Usuario y contraseña son requeridos.", "warning");
+         return;
+      }
+      setLoading(true);
 
       try {
-         const response = await axios.post(url, credentials, {
-            headers: { "Content-Type": "application/json" },
-         });
-
+         const response = await renewToken({ username, password });
          const token = response.data.user?.token_access;
          if (!token) throw new Error("Token no encontrado en la respuesta");
 
-         localStorage.setItem("AUTH_TOKEN", token);
+         localStorage.setItem("AUTH_TOKEN_REUNE", token);
          setToken(token);
-         setSuccess("Inicio de sesión exitoso ✅");
       } catch (err) {
-         setError("Error al consultar quejas: " + err?.response?.data?.message || err.message);
+         showSnackbar(
+            "Credenciales incorrectas o error de conexion: " + (err?.response?.data?.message || err.message),
+            "error",
+         );
+      } finally {
+         setLoading(false);
       }
+   };
+
+   const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") iniciarSesion();
    };
 
    return (
@@ -53,22 +78,68 @@ const Login = ({ setToken }) => {
             variant="outlined"
             fullWidth
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e) => {
+               setUsername(e.target.value);
+            }}
+            onKeyDown={handleKeyDown}
+            disabled={loading}
+            autoFocus
          />
          <TextField
             label="Contraseña"
             variant="outlined"
-            type="password"
+            type={showPassword ? "text" : "password"}
             fullWidth
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => {
+               setPassword(e.target.value);
+            }}
+            onKeyDown={handleKeyDown}
+            disabled={loading}
+            InputProps={{
+               endAdornment: (
+                  <InputAdornment position="end">
+                     <IconButton onClick={() => setShowPassword((prev) => !prev)} edge="end">
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                     </IconButton>
+                  </InputAdornment>
+               ),
+            }}
          />
-         {error && <Alert severity="error">{error}</Alert>}
-         {success && <Alert severity="success">{success}</Alert>}
 
-         <Button variant="contained" fullWidth onClick={iniciarSesion} sx={{ bgcolor: "#305e58ff" }}>
-            Iniciar sesión
+         <Button
+            variant="contained"
+            fullWidth
+            onClick={iniciarSesion}
+            disabled={loading}
+            sx={{ bgcolor: "#305e58ff" }}
+            startIcon={loading ? <CircularProgress size={18} color="inherit" /> : null}
+         >
+            {loading ? "Iniciando sesión..." : "Iniciar sesión"}
          </Button>
+
+         <Box sx={{ display: "flex", justifyContent: "center" }}>
+            <Tooltip title={`Ambiente activo: ${isTest ? "Test" : "Produccion"}`}>
+               <FormControlLabel
+                  control={
+                     <Switch
+                        checked={isTest}
+                        onChange={handleEnvToggle}
+                        size="small"
+                        sx={{
+                           "& .MuiSwitch-thumb": { bgcolor: isTest ? "#f59e0b" : "#305e58ff" },
+                           "& .MuiSwitch-track": { bgcolor: isTest ? "#fde68a" : "#a7c5c2" },
+                        }}
+                     />
+                  }
+                  label={
+                     <Typography variant="caption" color="text.secondary">
+                        {isTest ? "Test" : "Producción"}
+                     </Typography>
+                  }
+               />
+            </Tooltip>
+         </Box>
       </Box>
    );
 };

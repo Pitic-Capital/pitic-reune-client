@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Alert, Stack } from "@mui/material";
 import axios from "axios";
 import { TableComponent } from "../Common/TableComponent";
-import { API_URL } from "../../const/api_urls";
+import { getApiUrl } from "../../api/reune.client";
 
 const AclarationsTable = () => {
    const [error, setError] = useState("");
@@ -11,14 +11,14 @@ const AclarationsTable = () => {
    useEffect(() => {
       const fetchData = async () => {
          setError("");
-         const token = localStorage.getItem("AUTH_TOKEN");
+         const token = localStorage.getItem("AUTH_TOKEN_REUNE");
          if (!token) return setError("Token no disponible");
 
          try {
             // Paso 1: Obtener total de páginas
             const { data: totalData } = await axios.get(
-               `${API_URL}/reune/aclaraciones/obtener/aclaraciongeneral/total`,
-               { headers: { Authorization: token } }
+               `${getApiUrl()}/reune/aclaraciones/obtener/aclaraciongeneral/total`,
+               { headers: { Authorization: token } },
             );
 
             const totalPages = totalData?.folios?.[0]?.paginas || 0;
@@ -29,9 +29,9 @@ const AclarationsTable = () => {
 
             // Paso 2: Obtener datos de cada página
             const requests = Array.from({ length: totalPages }, (_, i) =>
-               axios.get(`${API_URL}/reune/aclaraciones/obtener/aclaraciongeneral/${i + 1}`, {
+               axios.get(`${getApiUrl()}/reune/aclaraciones/obtener/aclaraciongeneral/${i + 1}`, {
                   headers: { Authorization: token },
-               })
+               }),
             );
 
             const responses = await Promise.all(requests);
