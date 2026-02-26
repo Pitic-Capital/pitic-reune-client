@@ -8,10 +8,9 @@ import {
    getCodigosPostales,
    getMunicipios,
    getColonias,
+   renewTokenRedeco,
 } from "../api/reune.client";
 import type { SelectOption } from "../types/reune.types";
-
-const getAuthToken = () => localStorage.getItem("AUTH_TOKEN_REUNE") ?? "";
 
 type CatalogueContextType = {
    mediosRecepcion: any[];
@@ -42,6 +41,7 @@ export const CataloguesProvider = ({ children }) => {
    const [municipalities, setMunicipalities] = useState([]);
    const [neighborhoods, setNeighborhoods] = useState([]);
    const [loading, setLoading] = useState(true);
+   const [redecoToken, setRedecoToken] = useState("");
 
    // Carga inicial de catalogos estaticos
    const MAX_RETRIES = 3;
@@ -51,19 +51,24 @@ export const CataloguesProvider = ({ children }) => {
          setLoading(true);
          for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
             try {
-               const token = getAuthToken();
-               const [{ data: medios }, { data: niveles }, { data: prods }, { data: ests }] = await Promise.all([
+               const authRes = await renewTokenRedeco({
+                  username: process.env.REACT_APP_REDECO_USERNAME || "",
+                  password: process.env.REACT_APP_REDECO_PASSWORD || "",
+               });
+               const token = authRes.data.user.token_access;
+               setRedecoToken(token);
+
+               const [medios, niveles, prods, ests] = await Promise.all([
                   getCatalogoMediosRecepcion(token),
                   getCatalogoNivelesAtencion(token),
                   getCatalogoProductos(token),
                   getEstados(),
                ]);
 
-               console.log("Catalogos cargados:", medios, niveles, prods, ests);
-               setMediosRecepcion(medios?.medio ?? []);
-               setNivelesAtencion(niveles?.nivelesDeAtencion ?? []);
-               setProductos(prods?.products ?? []);
-               setEstados(ests?.estados ?? []);
+               setMediosRecepcion(medios.data?.medio ?? []);
+               setNivelesAtencion(niveles.data?.nivelesDeAtencion ?? []);
+               setProductos(prods.data?.products ?? []);
+               setEstados(ests.data?.estados ?? []);
                break; // exito — salir del loop
             } catch (error) {
                console.warn(`Error al cargar catalogos (intento ${attempt}/${MAX_RETRIES}):`, error);
@@ -80,14 +85,17 @@ export const CataloguesProvider = ({ children }) => {
       fetchInitial();
    }, []);
 
-   const fetchCausas = useCallback(async (productId: string) => {
-      try {
-         const { data } = await getCatalogoCausas(getAuthToken(), productId);
-         setCausas(data?.causas ?? []);
-      } catch (error) {
-         console.error("Error al cargar causas:", error);
-      }
-   }, []);
+   const fetchCausas = useCallback(
+      async (productId: string) => {
+         try {
+            const { data } = await getCatalogoCausas(redecoToken, productId);
+            setCausas(data?.causas ?? []);
+         } catch (error) {
+            console.error("Error al cargar causas:", error);
+         }
+      },
+      [redecoToken],
+   );
 
    const fetchPostalCodes = useCallback(async (stateId: string) => {
       try {

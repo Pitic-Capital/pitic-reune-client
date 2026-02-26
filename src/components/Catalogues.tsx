@@ -1,65 +1,76 @@
-import { Box, Paper, Skeleton, Tab, Tabs, Typography } from "@mui/material";
+import { Box, Chip, CircularProgress, Stack, Typography } from "@mui/material";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import ErrorIcon from "@mui/icons-material/Error";
 import { useCatalogues } from "../context/CataloguesContext";
-import { useState } from "react";
+import { useMemo } from "react";
 import { TableComponent } from "./Common/TableComponent";
-import TabPanel from "./Common/TabPanel";
 
 const Catalogues = () => {
-   const [tabIndex, setTabIndex] = useState(0);
-
    const { mediosRecepcion, nivelesAtencion, productos, estados, loading } = useCatalogues();
 
-   // Si esta cargando, mostramos skeleton tabs y skeleton tables
-   if (loading) {
-      return (
-         <Box sx={{ width: "100%", bgcolor: "background.paper", borderRadius: 2, overflow: "hidden" }}>
-            <Box sx={{ borderBottom: 1, borderColor: "divider", p: 1 }}>
-               <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 1 }} />
-            </Box>
-            <Box sx={{ p: 3 }}>
-               <Skeleton variant="rounded" height={400} />
-            </Box>
-         </Box>
-      );
-   }
-
-   const tabsConfig = [
-      { label: "Medios de recepción", data: mediosRecepcion },
-      { label: "Niveles de atención", data: nivelesAtencion },
-      { label: "Productos", data: productos },
-      { label: "Estados (SEPOMEX)", data: estados },
-   ];
+   const catalogos = useMemo(
+      () => [
+         { data: mediosRecepcion, label: "Medios de recepción" },
+         { data: nivelesAtencion, label: "Niveles de atención" },
+         { data: productos, label: "Productos" },
+         { data: estados, label: "Estados" },
+      ],
+      [mediosRecepcion, nivelesAtencion, productos, estados],
+   );
 
    return (
-      <Paper elevation={0} sx={{ width: "100%", borderRadius: 2, overflow: "hidden" }}>
-         <Box sx={{ borderBottom: 1, borderColor: "divider", bgcolor: "#f8fdfc" }}>
-            <Tabs
-               value={tabIndex}
-               onChange={(_, newValue) => setTabIndex(newValue)}
-               variant="scrollable"
-               scrollButtons="auto"
-               textColor="inherit"
-               TabIndicatorProps={{ style: { backgroundColor: "#305e58ff" } }}
-               sx={{ "& .MuiTab-root": { fontWeight: "bold", color: "#305e58ff" } }}
-            >
-               {tabsConfig.map((tab, idx) => (
-                  <Tab key={idx} label={tab.label} />
-               ))}
-            </Tabs>
-         </Box>
-
-         {tabsConfig.map((tab, idx) => (
-            <TabPanel key={idx} value={tabIndex} index={idx}>
-               {tab.data.length > 0 ? (
-                  <TableComponent data={tab.data} label={tab.label} rowsPerPageDefault={10} />
-               ) : (
-                  <Typography color="text.secondary" align="center" sx={{ py: 4 }}>
-                     No se encontró información para {tab.label.toLowerCase()}
+      <Stack spacing={3}>
+         {loading ? (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2, py: 6, justifyContent: "center" }}>
+               <CircularProgress size={24} sx={{ color: "#305e58ff" }} />
+               <Typography color="text.secondary">Cargando catálogos...</Typography>
+            </Box>
+         ) : (
+            <>
+               <Box
+                  sx={{
+                     display: "flex",
+                     alignItems: "center",
+                     justifyContent: "space-between",
+                     flexWrap: "wrap",
+                     gap: 1,
+                  }}
+               >
+                  <Typography variant="h6" fontWeight="bold" color="#305e58ff">
+                     Catálogos
                   </Typography>
-               )}
-            </TabPanel>
-         ))}
-      </Paper>
+                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                     {catalogos.map(({ label, data }) => {
+                        const count = Array.isArray(data) ? data.length : Object.values(data ?? {}).length;
+                        const ok = count > 0;
+                        return (
+                           <Chip
+                              key={label}
+                              label={`${label}: ${count}`}
+                              size="small"
+                              icon={ok ? <CheckCircleIcon /> : <ErrorIcon />}
+                              color={ok ? "success" : "error"}
+                              variant="outlined"
+                           />
+                        );
+                     })}
+                  </Box>
+               </Box>
+
+               <Box
+                  sx={{
+                     display: "grid",
+                     gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                     gap: 3,
+                  }}
+               >
+                  {catalogos.map(({ data, label }) => (
+                     <TableComponent key={label} data={data} label={label} rowsPerPageDefault={5} />
+                  ))}
+               </Box>
+            </>
+         )}
+      </Stack>
    );
 };
 

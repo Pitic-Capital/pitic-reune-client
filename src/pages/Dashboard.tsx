@@ -1,8 +1,8 @@
 import { Box, Button, Stack, Tab, Tabs, Typography } from "@mui/material";
 import { useState } from "react";
-import ConsultsTable from "../components/Consults/ConsultsTable";
-import AclarationsTable from "../components/Aclarations/AclarationsTable";
-import ComplaintsTable from "../components/Complaints/ComplaintsTable";
+import Consults from "../components/Consults/Consults";
+import Aclarations from "../components/Aclarations/Aclarations";
+import Complaints from "../components/Complaints/Complaints";
 import Catalogues from "../components/Catalogues";
 import TabPanel from "../components/Common/TabPanel";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -69,13 +69,13 @@ const Dashboard = ({ setToken }) => {
             </Tabs>
          </Box>
          <TabPanel value={value} index={0}>
-            <ConsultsTable />
+            <Consults />
          </TabPanel>
          <TabPanel value={value} index={1}>
-            <AclarationsTable />
+            <Aclarations />
          </TabPanel>
          <TabPanel value={value} index={2}>
-            <ComplaintsTable />
+            <Complaints />
          </TabPanel>
          <TabPanel value={value} index={3}>
             <Catalogues />

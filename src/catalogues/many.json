@@ -1,0 +1,25 @@
+{
+  "sentido_de_la_resolucion": [
+    { "value": "1", "label": "Totalmente favorable al usuario" },
+    { "value": "2", "label": "Desfavorable al usuario" },
+    { "value": "3", "label": "Parcialmente favorable al usuario" }
+  ],
+  "tipo_de_persona": [
+    { "value": "1", "label": "Persona física" },
+    { "value": "2", "label": "Persona Moral" }
+  ],
+  "sexo": [
+    { "value": "H", "label": "Hombre" },
+    { "value": "M", "label": "Mujer" }
+  ],
+  "estado_de_concluido_o_pendiente": [
+    { "value": "1", "label": "Pendiente" },
+    { "value": "2", "label": "Concluido" }
+  ],
+  "no_de_trimestre": [
+    { "value": "1", "label": "Primer trimestre (Enero-Marzo)" },
+    { "value": "2", "label": "Segundo trimestre (Abril-Junio)" },
+    { "value": "3", "label": "Tercer trimestre (Julio-Septiembre)" },
+    { "value": "4", "label": "Cuarto trimestre (Octubre-Diciembre)" }
+  ]
+}

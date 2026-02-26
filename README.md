@@ -65,16 +65,15 @@ Tipos y contratos TypeScript (`Consulta`, `Reclamacion`, `Aclaracion`, `BaseResp
 
 ### `src/components/`
 
-| Archivo                            | Descripcion                                                                                        |
-| ---------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `Form.tsx`                         | Formulario principal centralizado para el registro de los módulos.                                 |
-| `Consults/ConsultsTable.tsx`       | Paginación, consulta y eliminación específica de **Consultas**.                                    |
-| `Aclarations/AclarationsTable.tsx` | Paginación, consulta y eliminación específica de **Aclaraciones**.                                 |
-| `Complaints/ComplaintsTable.tsx`   | Paginación, consulta y eliminación específica de **Reclamaciones**.                                |
-| `Catalogues.tsx`                   | Visualiza en formato _custom tab panels_ los catálogos descargados de la institución.              |
-| `Common/TableComponent.tsx`        | Tabla genérica paginada con soporte de scroll horizontal y control de skeleton de carga integrado. |
-| `Common/ConfirmDeleteDialog.tsx`   | Diálogo de confirmacion de eliminación reutilizable con el tema UI corporativo de la empresa.      |
-| `Common/TabPanel.tsx`              | Contenedor semántico responsivo para el contenido de las pestañas en el Dashboard.                 |
+| Archivo                          | Descripcion                                                                                                                                                                               |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Consults/`                      | Módulo para Consultas. Contiene el contenedor de pestañas (`Consults.tsx`), el formulario de captura alineado a la API (`ConsultForm.tsx`) y la tabla de historial (`ConsultsTable.tsx`). |
+| `Aclarations/`                   | Módulo para Aclaraciones. Contiene el contenedor (`Aclarations.tsx`), el formulario oficial de Aclaraciones (`AclarationForm.tsx`) y la tabla (`AclarationsTable.tsx`).                   |
+| `Complaints/`                    | Módulo para Reclamaciones. Contiene el contenedor (`Complaints.tsx`), el formulario de Reclamaciones (`ComplaintForm.tsx`) y la tabla (`ComplaintsTable.tsx`).                            |
+| `Catalogues.tsx`                 | Visualiza en formato _custom tab panels_ los catálogos descargados de la institución.                                                                                                     |
+| `Common/TableComponent.tsx`      | Tabla genérica paginada con soporte de scroll horizontal y control de skeleton de carga integrado.                                                                                        |
+| `Common/ConfirmDeleteDialog.tsx` | Diálogo de confirmacion de eliminación reutilizable con el tema UI corporativo de la empresa.                                                                                             |
+| `Common/TabPanel.tsx`            | Contenedor semántico responsivo para el contenido de las pestañas en el Dashboard.                                                                                                        |
 
 ### `src/context/CataloguesContext.tsx`
 

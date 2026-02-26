@@ -1,5 +1,16 @@
 import axios from "axios";
-import { CreateSuperUserPayload, CreateUserPayload, TokenPayload, TokenResponse } from "../types/reune.types";
+import {
+   CreateSuperUserPayload,
+   CreateUserPayload,
+   TokenPayload,
+   TokenResponse,
+   Consulta,
+   Reclamacion,
+   Aclaracion,
+   RespuestaEnvioConsultas,
+   RespuestaEnvioReclamaciones,
+   RespuestaEnvioAclaraciones,
+} from "../types/reune.types";
 
 //#region Config de ambiente
 export const API_URL_PROD = "https://api-reune.condusef.gob.mx";
@@ -45,12 +56,17 @@ export const createUser = (token: string, payload: CreateUserPayload) =>
 export const getToken = (payload: TokenPayload) =>
    buildClient().get<TokenResponse>("/auth/users/token/", { data: payload });
 
-/** Renueva token (POST). */
+/** Renueva token de REUNE (POST). */
 export const renewToken = (payload: TokenPayload) => buildClient().post<TokenResponse>("/auth/users/token/", payload);
+
+/** Renueva token de REDECO (POST) para catálogos. */
+export const renewTokenRedeco = (payload: TokenPayload) =>
+   buildRedecoClient().post<TokenResponse>("/auth/users/token/", payload);
 //#endregion
 
 //#region Consultas
-export const sendConsultas = (token: string, payload: any[]) => buildClient(token).post("/reune/consultas", payload);
+export const sendConsultas = (token: string, payload: Consulta[]) =>
+   buildClient(token).post<RespuestaEnvioConsultas>("/reune/consultas", payload);
 
 export const getConsultasTotal = (token: string) =>
    buildClient(token).get("/reune/consultas/obtener/consultageneral/total");
@@ -62,8 +78,8 @@ export const deleteConsulta = (token: string, folio: string) => buildClient(toke
 //#endregion
 
 //#region Reclamaciones
-export const sendReclamaciones = (token: string, payload: any[]) =>
-   buildClient(token).post("/reune/reclamaciones", payload);
+export const sendReclamaciones = (token: string, payload: Reclamacion[]) =>
+   buildClient(token).post<RespuestaEnvioReclamaciones>("/reune/reclamaciones", payload);
 
 export const getReclamacionesTotal = (token: string) =>
    buildClient(token).get("/reune/reclamaciones/obtener/reclamaciongeneral/total");
@@ -76,8 +92,8 @@ export const deleteReclamacion = (token: string, folio: string) =>
 //#endregion
 
 //#region Aclaraciones
-export const sendAclaraciones = (token: string, payload: any[]) =>
-   buildClient(token).post("/reune/aclaraciones", payload);
+export const sendAclaraciones = (token: string, payload: Aclaracion[]) =>
+   buildClient(token).post<RespuestaEnvioAclaraciones>("/reune/aclaraciones", payload);
 
 export const getAclaracionesTotal = (token: string) =>
    buildClient(token).get("/reune/aclaraciones/obtener/aclaraciongeneral/total");
